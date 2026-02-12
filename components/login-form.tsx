@@ -26,7 +26,7 @@ export default function LoginForm() {
                     <CardContent className="grid gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="username">Username</Label>
-                            <Input id="username" name="username" type="text" placeholder="wadson" required />
+                            <Input id="username" name="username" type="text" required />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
