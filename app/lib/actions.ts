@@ -1,6 +1,6 @@
 'use server';
 
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/app/lib/db';
@@ -98,4 +98,8 @@ export async function deleteEntry(entryId: string) {
     });
 
     revalidatePath('/');
+}
+
+export async function logout() {
+    await signOut({ redirectTo: '/login' });
 }

@@ -27,11 +27,7 @@ export default function LoginForm() {
                 >
                     <option value="geral">Geral</option>
                     <option value="3am">3AM</option>
-                    <option value="wadson">Wadson (Func)</option>
-                    <option value="romulo">Romulo (Func)</option>
-                    <option value="jeferson">Jeferson (Func)</option>
-                    <option value="raffael">Raffael (Func)</option>
-                    <option value="ulisses">Ulisses (Func)</option>
+
                 </select>
             </div>
 

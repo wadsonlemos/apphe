@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createEntry, deleteEntry } from '@/app/lib/actions';
+import { createEntry, deleteEntry, logout } from '@/app/lib/actions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -61,9 +61,8 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
         return totalMilliseconds === 0 ? "0h" : `${h}h${m > 0 ? ` ${m}min` : ""}`;
     };
 
-    const handleLogout = () => {
-        // In NextAuth we use a link or button to signout flow, usually just valid link
-        window.location.href = '/api/auth/signout';
+    const handleLogout = async () => {
+        await logout();
     };
 
     async function handleAddEntry(formData: FormData) {
