@@ -1,3 +1,5 @@
+'use server';
+
 // Consolidated imports
 import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
@@ -5,7 +7,24 @@ import { z } from 'zod';
 import { prisma } from '@/app/lib/db';
 import { revalidatePath } from 'next/cache';
 
-// ... authenticate function ...
+export async function authenticate(
+    prevState: string | undefined,
+    formData: FormData,
+) {
+    try {
+        await signIn('credentials', formData);
+    } catch (error) {
+        if (error instanceof AuthError) {
+            switch (error.type) {
+                case 'CredentialsSignin':
+                    return 'Invalid credentials.';
+                default:
+                    return 'Something went wrong.';
+            }
+        }
+        throw error;
+    }
+}
 
 const CreateEntrySchema = z.object({
     date: z.string(),
