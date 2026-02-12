@@ -17,13 +17,6 @@ export default async function Dashboard() {
   if (session.user.role === 'ADMIN') {
     // Admin sees all users and all entries
     users = await prisma.user.findMany({
-      where: {
-        AND: [
-          { name: { not: { contains: '(Func)' } } },
-          { name: { notIn: ['Wadson', 'Romulo', 'Jeferson', 'Raffael', 'Ulisses', 'Wadson (Func)', 'Romulo (Func)', 'Jeferson (Func)', 'Raffael (Func)', 'Ulisses (Func)'] } },
-          { username: { notIn: ['wadson', 'romulo', 'jeferson', 'raffael', 'ulisses'] } }
-        ]
-      },
       select: { id: true, name: true, username: true, role: true }
     });
     entries = await prisma.overtimeEntry.findMany({

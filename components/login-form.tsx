@@ -42,7 +42,6 @@ export default function LoginForm() {
                 <input
                     name="password"
                     type="password"
-                    placeholder="Digite sua senha"
                     required
                     className="w-full p-3 rounded-[10px] bg-[rgba(30,41,59,0.8)] border border-[rgba(56,189,248,0.15)] text-[#e2e8f0] text-[15px] outline-none box-border placeholder:text-slate-600"
                 />
