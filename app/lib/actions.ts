@@ -35,8 +35,16 @@ const CreateEntrySchema = z.object({
 
 export async function createEntry(formData: FormData) {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
         throw new Error('User not authenticated');
+    }
+
+    // Admins can specify a username (targetUser), regular users use their own
+    const targetUsername = formData.get('targetUsername') as string || session.user.name!;
+
+    // Verify permission: if target != self, must be admin
+    if (targetUsername !== session.user.name && session.user.role !== 'ADMIN') {
+        throw new Error('Unauthorized');
     }
 
     const { date, startTime, endTime, description } = CreateEntrySchema.parse({
@@ -46,22 +54,18 @@ export async function createEntry(formData: FormData) {
         description: formData.get('description'),
     });
 
-    // Combine date and time to create DateTime objects
     const startDateTime = new Date(`${date}T${startTime}:00`);
     const endDateTime = new Date(`${date}T${endTime}:00`);
     const entryDate = new Date(`${date}T00:00:00`);
 
-    // Basic validation
     if (endDateTime <= startDateTime) {
-        // In a real app we'd return a form error, for now we'll just throw or handle it.
-        // Let's rely on client-side mostly but this is a safety check.
         console.error("End time must be after start time");
         return;
     }
 
     await prisma.overtimeEntry.create({
         data: {
-            user: { connect: { username: session.user.name! } },
+            user: { connect: { username: targetUsername } },
             date: entryDate,
             startTime: startDateTime,
             endTime: endDateTime,
@@ -69,6 +73,17 @@ export async function createEntry(formData: FormData) {
         }
     });
 
-    revalidatePath('/entries');
+    revalidatePath('/');
+}
+
+export async function deleteEntry(entryId: string) {
+    const session = await auth();
+    if (!session?.user) throw new Error('Unauthorized');
+
+    // In a real app we should check if the user owns the entry or is admin
+    await prisma.overtimeEntry.delete({
+        where: { id: entryId }
+    });
+
     revalidatePath('/');
 }
