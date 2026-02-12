@@ -7,9 +7,6 @@ async function main() {
   const password = await bcrypt.hash('123456', 10)
 
   const users = [
-    { name: 'Wadson', username: 'wadson', role: 'ADMIN', password: 'default_password_placeholder' },
-    { name: 'Romulo', username: 'romulo', role: 'USER', password: 'default_password_placeholder' },
-    { name: 'Raffael', username: 'raffael', role: 'USER', password: 'default_password_placeholder' },
     { name: 'Geral', username: 'geral', role: 'USER', password: 'horaextra' },
     { name: '3AM', username: '3am', role: 'ADMIN', password: 'horas2026' },
   ]
