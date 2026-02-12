@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createEntry, deleteEntry, logout } from '@/app/lib/actions';
+import { createEntry, deleteEntry } from '@/app/lib/actions';
+import { signOut } from 'next-auth/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -62,7 +63,7 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
     };
 
     const handleLogout = async () => {
-        await logout();
+        await signOut({ callbackUrl: '/login' });
     };
 
     async function handleAddEntry(formData: FormData) {

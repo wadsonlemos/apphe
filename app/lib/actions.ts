@@ -80,12 +80,12 @@ export async function createEntry(formData: FormData) {
             }
         });
 
-        try {
-            revalidatePath('/');
-        } catch (revalidateError) {
-            console.error("Revalidate Path Error:", revalidateError);
-            // Don't fail the action if revalidation fails, just log it
-        }
+        // try {
+        //     revalidatePath('/');
+        // } catch (revalidateError) {
+        //     console.error("Revalidate Path Error:", revalidateError);
+        // }
+        // revalidatePath('/'); // Ensure at least one call if safe
 
         return { success: true, message: 'Entry created successfully' };
     } catch (e: any) {
