@@ -34,9 +34,14 @@ const CreateEntrySchema = z.object({
 });
 
 export async function createEntry(formData: FormData) {
+    console.log("DEBUG: createEntry started"); // Debug log
+
     try {
         const session = await auth();
+        console.log("DEBUG: Session retrieved", session?.user?.email); // Debug log
+
         if (!session?.user) {
+            console.log("DEBUG: No session");
             return { success: false, message: 'User not authenticated' };
         }
 
@@ -44,6 +49,8 @@ export async function createEntry(formData: FormData) {
         // Fallback to session.user.username, NOT name (which might be different)
         const sessionUsername = session.user.username || session.user.name;
         const targetUsername = formData.get('targetUsername') as string || sessionUsername!;
+
+        console.log("DEBUG: Target Username:", targetUsername); // Debug log
 
         if (!targetUsername) {
             return { success: false, message: 'Username missing in session or form' };
@@ -55,12 +62,15 @@ export async function createEntry(formData: FormData) {
             return { success: false, message: 'Unauthorized: Cannot create entry for another user' };
         }
 
-        const { date, startTime, endTime, description } = CreateEntrySchema.parse({
+        const rawData = {
             date: formData.get('date'),
             startTime: formData.get('startTime'),
             endTime: formData.get('endTime'),
             description: formData.get('description') || undefined,
-        });
+        };
+        console.log("DEBUG: Parsing data", rawData);
+
+        const { date, startTime, endTime, description } = CreateEntrySchema.parse(rawData);
 
         const startDateTime = new Date(`${date}T${startTime}:00`);
         const endDateTime = new Date(`${date}T${endTime}:00`);
@@ -69,6 +79,8 @@ export async function createEntry(formData: FormData) {
         if (endDateTime <= startDateTime) {
             return { success: false, message: "End time must be after start time" };
         }
+
+        console.log("DEBUG: Connecting to DB");
 
         await prisma.overtimeEntry.create({
             data: {
@@ -80,16 +92,19 @@ export async function createEntry(formData: FormData) {
             }
         });
 
-        // try {
-        //     revalidatePath('/');
-        // } catch (revalidateError) {
-        //     console.error("Revalidate Path Error:", revalidateError);
-        // }
-        // revalidatePath('/'); // Ensure at least one call if safe
+        console.log("DEBUG: Saved to DB");
+
+        try {
+            revalidatePath('/');
+            console.log("DEBUG: Revalidated path");
+        } catch (revalidateError) {
+            console.error("Revalidate Path Error:", revalidateError);
+            // Don't fail the action if revalidation fails, just log it
+        }
 
         return { success: true, message: 'Entry created successfully' };
     } catch (e: any) {
-        console.error("Server Action Error:", e);
+        console.error("Server Action Error (CATCH):", e);
 
         // Handle specific Prisma errors
         if (e.code === 'P2025') { // "An operation failed because it depends on one or more records that were required but not found."
