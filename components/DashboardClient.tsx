@@ -77,9 +77,9 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
             await createEntry(formData);
             formRef.current?.reset();
             // Optional: Show success toast
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Erro ao adicionar lançamento");
+            alert(`Erro ao adicionar lançamento: ${e.message}`);
         } finally {
             setIsPending(false);
         }
@@ -89,11 +89,44 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
         if (!confirm("Tem certeza que deseja excluir?")) return;
         try {
             await deleteEntry(id);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Erro ao excluir");
+            alert(`Erro ao excluir: ${e.message}`);
         }
     }
+
+    const downloadCSV = () => {
+        if (!selectedEmployeeUsername) return;
+        const entries = entriesByUsername[selectedEmployeeUsername] || [];
+        if (entries.length === 0) return alert("Nenhum lançamento para exportar.");
+
+        const headers = ["Data", "Inicio", "Fim", "Total", "Descricao"];
+        const rows = entries.map(entry => {
+            const start = new Date(entry.startTime);
+            const end = new Date(entry.endTime);
+            const totalMs = end.getTime() - start.getTime();
+            const h = Math.floor((totalMs / (1000 * 60)) / 60);
+            const m = Math.floor((totalMs / (1000 * 60)) % 60);
+            const duration = `${h}h${m > 0 ? ` ${m}min` : ''}`;
+
+            return [
+                format(new Date(entry.date), 'dd/MM/yyyy'),
+                format(start, 'HH:mm'),
+                format(end, 'HH:mm'),
+                duration,
+                `"${(entry.description || '').replace(/"/g, '""')}"` // Escape quotes
+            ].join(",");
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `extrato_horas_${selectedEmployeeUsername}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     // --- UI RENDER ---
 
@@ -179,16 +212,25 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
                             </button>
                         )}
 
-                        <div className="flex items-center gap-3.5 mb-7">
-                            <div className="w-[52px] h-[52px] rounded-[14px] bg-gradient-to-br from-[rgba(14,165,233,0.15)] to-[rgba(56,189,248,0.3)] border border-[rgba(56,189,248,0.2)] flex items-center justify-center text-[22px] font-bold text-[#38bdf8]">
-                                {selectedEmployeeUsername[0].toUpperCase()}
+                        <div className="flex items-center justify-between mb-7">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-[52px] h-[52px] rounded-[14px] bg-gradient-to-br from-[rgba(14,165,233,0.15)] to-[rgba(56,189,248,0.3)] border border-[rgba(56,189,248,0.2)] flex items-center justify-center text-[22px] font-bold text-[#38bdf8]">
+                                    {selectedEmployeeUsername[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <h2 className="m-0 text-[22px] font-bold text-white capitalize">{selectedEmployeeUsername}</h2>
+                                    <p className="m-[2px_0_0] text-[#64748b] text-[13px]">
+                                        Total acumulado: <span className="text-[#38bdf8] font-semibold">{getTotalHours(selectedEmployeeUsername)}</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="m-0 text-[22px] font-bold text-white capitalize">{selectedEmployeeUsername}</h2>
-                                <p className="m-[2px_0_0] text-[#64748b] text-[13px]">
-                                    Total acumulado: <span className="text-[#38bdf8] font-semibold">{getTotalHours(selectedEmployeeUsername)}</span>
-                                </p>
-                            </div>
+                            {/* Export CSV Button */}
+                            <button
+                                onClick={downloadCSV}
+                                className="bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.2)] text-[#34d399] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[rgba(16,185,129,0.2)] transition-colors flex items-center gap-2"
+                            >
+                                📄 Exportar CSV
+                            </button>
                         </div>
 
                         {/* FORM */}
@@ -237,9 +279,11 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
                         </div>
 
                         {/* LIST */}
-                        <h3 className="text-[15px] font-bold text-[#94a3b8] mb-3.5">
-                            📝 Lançamentos Registrados
-                        </h3>
+                        <div className="flex items-center justify-between mb-3.5">
+                            <h3 className="text-[15px] font-bold text-[#94a3b8]">
+                                📝 Lançamentos Registrados
+                            </h3>
+                        </div>
 
                         <div className="flex flex-col gap-2.5">
                             {(entriesByUsername[selectedEmployeeUsername] || []).length === 0 ? (

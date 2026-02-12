@@ -17,6 +17,7 @@ export default async function Dashboard() {
   if (session.user.role === 'ADMIN') {
     // Admin sees all users and all entries
     users = await prisma.user.findMany({
+      where: { NOT: { name: { contains: '(Func)' } } },
       select: { id: true, name: true, username: true, role: true }
     });
     entries = await prisma.overtimeEntry.findMany({
