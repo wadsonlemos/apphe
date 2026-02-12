@@ -9,6 +9,12 @@ async function main() {
   const users = [
     { name: 'Geral', username: 'geral', role: 'ADMIN', password: 'horaextra' },
     { name: '3AM', username: '3am', role: 'ADMIN', password: 'horas2026' },
+    // Employees
+    { name: 'Wadson', username: 'wadson', role: 'USER', password: '123' },
+    { name: 'Romulo', username: 'romulo', role: 'USER', password: '123' },
+    { name: 'Jeferson', username: 'jeferson', role: 'USER', password: '123' },
+    { name: 'Raffael', username: 'raffael', role: 'USER', password: '123' },
+    { name: 'Ulisses', username: 'ulisses', role: 'USER', password: '123' },
   ]
 
   for (const user of users) {
