@@ -1,30 +1,11 @@
-'use server';
-
-import { signIn, signOut } from '@/auth';
+// Consolidated imports
+import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/app/lib/db';
-import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 
-export async function authenticate(
-    prevState: string | undefined,
-    formData: FormData,
-) {
-    try {
-        await signIn('credentials', formData);
-    } catch (error) {
-        if (error instanceof AuthError) {
-            switch (error.type) {
-                case 'CredentialsSignin':
-                    return 'Invalid credentials.';
-                default:
-                    return 'Something went wrong.';
-            }
-        }
-        throw error;
-    }
-}
+// ... authenticate function ...
 
 const CreateEntrySchema = z.object({
     date: z.string(),
@@ -80,11 +61,23 @@ export async function createEntry(formData: FormData) {
             }
         });
 
-        revalidatePath('/');
+        try {
+            revalidatePath('/');
+        } catch (revalidateError) {
+            console.error("Revalidate Path Error:", revalidateError);
+            // Don't fail the action if revalidation fails, just log it
+        }
+
         return { success: true, message: 'Entry created successfully' };
     } catch (e: any) {
         console.error("Server Action Error:", e);
-        return { success: false, message: e.message || 'Internal Server Error' };
+
+        // Handle specific Prisma errors
+        if (e.code === 'P2025') { // "An operation failed because it depends on one or more records that were required but not found."
+            return { success: false, message: `Usuário '${formData.get('targetUsername')}' não encontrado no banco de dados.` };
+        }
+
+        return { success: false, message: String(e.message || 'Internal Server Error') };
     }
 }
 
