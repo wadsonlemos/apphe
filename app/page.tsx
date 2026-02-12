@@ -29,7 +29,7 @@ export default async function Dashboard() {
     users = [
       {
         id: session.user.id!,
-        name: session.user.name,
+        name: session.user.name || null, // Fix: Ensure it's string | null, not undefined
         username: session.user.name!,
         role: session.user.role!
       }
