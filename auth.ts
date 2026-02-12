@@ -40,6 +40,23 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             },
         }),
     ],
-    secret: process.env.AUTH_SECRET, // Explicitly set secret
-    trustHost: true, // Required for some Vercel deployments
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.role = user.role;
+                token.id = user.id;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            if (token) {
+                session.user.role = token.role;
+                session.user.id = token.id;
+                session.user.name = token.name; // ensure name is consistent
+            }
+            return session;
+        },
+    },
+    secret: process.env.AUTH_SECRET,
+    trustHost: true,
 });
