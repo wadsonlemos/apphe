@@ -29,14 +29,14 @@ export default async function Dashboard() {
     users = [
       {
         id: session.user.id!,
-        name: session.user.name || null, // Fix: Ensure it's string | null, not undefined
-        username: session.user.name!,
+        name: session.user.name || null,
+        username: session.user.username || session.user.name!,
         role: session.user.role!
       }
     ];
 
     entries = await prisma.overtimeEntry.findMany({
-      where: { user: { username: session.user.name! } },
+      where: { user: { username: session.user.username || session.user.name! } },
       include: { user: { select: { name: true, username: true } } },
       orderBy: { date: 'desc' }
     });

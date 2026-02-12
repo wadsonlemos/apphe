@@ -33,7 +33,7 @@ type Props = {
 
 export default function DashboardClient({ session, initialEntries, users }: Props) {
     const [selectedEmployeeUsername, setSelectedEmployeeUsername] = useState<string | null>(
-        session.user.role === 'ADMIN' ? null : session.user.name
+        session.user.role === 'ADMIN' ? null : (session.user.username || session.user.name)
     );
     const [isPending, setIsPending] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);

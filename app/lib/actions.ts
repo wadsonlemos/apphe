@@ -40,10 +40,17 @@ export async function createEntry(formData: FormData) {
     }
 
     // Admins can specify a username (targetUser), regular users use their own
-    const targetUsername = formData.get('targetUsername') as string || session.user.name!;
+    // Fallback to session.user.username, NOT name (which might be different)
+    const sessionUsername = session.user.username || session.user.name;
+    const targetUsername = formData.get('targetUsername') as string || sessionUsername!;
+
+    if (!targetUsername) {
+        throw new Error('Username missing');
+    }
 
     // Verify permission: if target != self, must be admin
-    if (targetUsername !== session.user.name && session.user.role !== 'ADMIN') {
+    // We compare against session.user.username (preferred) or name
+    if (targetUsername !== sessionUsername && session.user.role !== 'ADMIN') {
         throw new Error('Unauthorized');
     }
 
@@ -51,7 +58,7 @@ export async function createEntry(formData: FormData) {
         date: formData.get('date'),
         startTime: formData.get('startTime'),
         endTime: formData.get('endTime'),
-        description: formData.get('description'),
+        description: formData.get('description') || undefined,
     });
 
     const startDateTime = new Date(`${date}T${startTime}:00`);
