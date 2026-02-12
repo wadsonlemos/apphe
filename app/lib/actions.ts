@@ -70,6 +70,10 @@ export async function createEntry(formData: FormData) {
         };
         console.log("DEBUG: Parsing data", rawData);
 
+        if (rawData.description === 'Ping') {
+            return { success: true, message: 'Pong: Server is reachable' };
+        }
+
         const { date, startTime, endTime, description } = CreateEntrySchema.parse(rawData);
 
         const startDateTime = new Date(`${date}T${startTime}:00`);
@@ -80,11 +84,26 @@ export async function createEntry(formData: FormData) {
             return { success: false, message: "End time must be after start time" };
         }
 
-        console.log("DEBUG: Connecting to DB");
+        console.log("DEBUG: Connecting to DB to resolve user");
+
+        // Resolve user by ID to avoid case sensitivity issues with 'connect: { username }'
+        const dbUser = await prisma.user.findFirst({
+            where: {
+                username: { equals: targetUsername, mode: 'insensitive' }
+            },
+            select: { id: true }
+        });
+
+        if (!dbUser) {
+            console.log("DEBUG: User not found", targetUsername);
+            return { success: false, message: `Usuário '${targetUsername}' não encontrado.` };
+        }
+
+        console.log("DEBUG: User found, creating entry for ID:", dbUser.id);
 
         await prisma.overtimeEntry.create({
             data: {
-                user: { connect: { username: targetUsername } },
+                user: { connect: { id: dbUser.id } },
                 date: entryDate,
                 startTime: startDateTime,
                 endTime: endDateTime,
@@ -104,10 +123,10 @@ export async function createEntry(formData: FormData) {
 
         return { success: true, message: 'Entry created successfully' };
     } catch (e: any) {
-        console.error("Server Action Error (CATCH):", e);
+        console.error("Server Action Error (CATCH):", e); // Log the full error
 
         // Handle specific Prisma errors
-        if (e.code === 'P2025') { // "An operation failed because it depends on one or more records that were required but not found."
+        if (e.code === 'P2025') {
             return { success: false, message: `Usuário '${formData.get('targetUsername')}' não encontrado no banco de dados.` };
         }
 
