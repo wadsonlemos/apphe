@@ -11,9 +11,11 @@ export async function authenticate(
     prevState: string | undefined,
     formData: FormData,
 ) {
+    console.log("DEBUG: authenticate action called"); // Debug log
     try {
         await signIn('credentials', formData);
     } catch (error) {
+        console.log("DEBUG: authenticate error caught", error); // Debug log
         if (error instanceof AuthError) {
             switch (error.type) {
                 case 'CredentialsSignin':
