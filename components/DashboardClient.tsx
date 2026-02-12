@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createEntry, deleteEntry } from '@/app/lib/actions';
+import { createEntry, deleteEntry, testConnection } from '@/app/lib/actions';
 import { signOut } from 'next-auth/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -153,6 +153,16 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
                     <span className={`px-3 py-1.5 rounded-[20px] text-xs font-semibold border ${isAdmin ? "bg-[rgba(168,85,247,0.15)] border-[rgba(168,85,247,0.3)] text-[#c4b5fd]" : "bg-[rgba(56,189,248,0.1)] border-[rgba(56,189,248,0.2)] text-[#7dd3fc]"}`}>
                         {isAdmin ? "👑 Admin" : `👤 ${session.user.name}`}
                     </span>
+                    <button onClick={async () => {
+                        try {
+                            const res = await testConnection();
+                            alert(res.message);
+                        } catch (e: any) {
+                            alert("Erro de conexão: " + e.message);
+                        }
+                    }} className="bg-[rgba(16,185,129,0.1)] border border-[rgba(16,185,129,0.2)] text-[#34d399] px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-[rgba(16,185,129,0.2)] transition-colors">
+                        Testar Conexão
+                    </button>
                     <button onClick={handleLogout} className="bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)] text-[#fca5a5] px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-[rgba(239,68,68,0.2)] transition-colors">
                         Sair
                     </button>

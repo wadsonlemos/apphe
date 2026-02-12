@@ -33,8 +33,18 @@ const CreateEntrySchema = z.object({
     description: z.string().optional(),
 });
 
+export async function testConnection() {
+    return { success: true, message: "Conexão com servidor OK!" };
+}
+
 export async function createEntry(formData: FormData) {
     console.log("DEBUG: createEntry started"); // Debug log
+
+    // 1. Immediate Ping check (Pre-Auth) to test server reachability
+    const description = formData.get('description') as string;
+    if (description === 'Ping') {
+        return { success: true, message: 'Pong: Server is reachable (Pre-Auth)' };
+    }
 
     try {
         const session = await auth();
@@ -70,11 +80,9 @@ export async function createEntry(formData: FormData) {
         };
         console.log("DEBUG: Parsing data", rawData);
 
-        if (rawData.description === 'Ping') {
-            return { success: true, message: 'Pong: Server is reachable' };
-        }
+        // Ping check removed (moved to top)
 
-        const { date, startTime, endTime, description } = CreateEntrySchema.parse(rawData);
+        const { date, startTime, endTime } = CreateEntrySchema.parse(rawData);
 
         const startDateTime = new Date(`${date}T${startTime}:00`);
         const endDateTime = new Date(`${date}T${endTime}:00`);
