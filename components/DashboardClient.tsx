@@ -74,12 +74,16 @@ export default function DashboardClient({ session, initialEntries, users }: Prop
         }
 
         try {
-            await createEntry(formData);
+            const result = await createEntry(formData);
+            if (result && !result.success) {
+                alert(`Erro ao adicionar lançamento: ${result.message}`);
+                return;
+            }
             formRef.current?.reset();
             // Optional: Show success toast
         } catch (e: any) {
             console.error(e);
-            alert(`Erro ao adicionar lançamento: ${e.message}`);
+            alert(`Erro ao adicionar lançamento: ${e.message || "Erro desconhecido"}`);
         } finally {
             setIsPending(false);
         }

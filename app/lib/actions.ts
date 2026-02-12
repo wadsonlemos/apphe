@@ -34,53 +34,58 @@ const CreateEntrySchema = z.object({
 });
 
 export async function createEntry(formData: FormData) {
-    const session = await auth();
-    if (!session?.user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Admins can specify a username (targetUser), regular users use their own
-    // Fallback to session.user.username, NOT name (which might be different)
-    const sessionUsername = session.user.username || session.user.name;
-    const targetUsername = formData.get('targetUsername') as string || sessionUsername!;
-
-    if (!targetUsername) {
-        throw new Error('Username missing');
-    }
-
-    // Verify permission: if target != self, must be admin
-    // We compare against session.user.username (preferred) or name
-    if (targetUsername !== sessionUsername && session.user.role !== 'ADMIN') {
-        throw new Error('Unauthorized');
-    }
-
-    const { date, startTime, endTime, description } = CreateEntrySchema.parse({
-        date: formData.get('date'),
-        startTime: formData.get('startTime'),
-        endTime: formData.get('endTime'),
-        description: formData.get('description') || undefined,
-    });
-
-    const startDateTime = new Date(`${date}T${startTime}:00`);
-    const endDateTime = new Date(`${date}T${endTime}:00`);
-    const entryDate = new Date(`${date}T00:00:00`);
-
-    if (endDateTime <= startDateTime) {
-        console.error("End time must be after start time");
-        return;
-    }
-
-    await prisma.overtimeEntry.create({
-        data: {
-            user: { connect: { username: targetUsername } },
-            date: entryDate,
-            startTime: startDateTime,
-            endTime: endDateTime,
-            description: description || '',
+    try {
+        const session = await auth();
+        if (!session?.user) {
+            return { success: false, message: 'User not authenticated' };
         }
-    });
 
-    revalidatePath('/');
+        // Admins can specify a username (targetUser), regular users use their own
+        // Fallback to session.user.username, NOT name (which might be different)
+        const sessionUsername = session.user.username || session.user.name;
+        const targetUsername = formData.get('targetUsername') as string || sessionUsername!;
+
+        if (!targetUsername) {
+            return { success: false, message: 'Username missing in session or form' };
+        }
+
+        // Verify permission: if target != self, must be admin
+        // We compare against session.user.username (preferred) or name
+        if (targetUsername !== sessionUsername && session.user.role !== 'ADMIN') {
+            return { success: false, message: 'Unauthorized: Cannot create entry for another user' };
+        }
+
+        const { date, startTime, endTime, description } = CreateEntrySchema.parse({
+            date: formData.get('date'),
+            startTime: formData.get('startTime'),
+            endTime: formData.get('endTime'),
+            description: formData.get('description') || undefined,
+        });
+
+        const startDateTime = new Date(`${date}T${startTime}:00`);
+        const endDateTime = new Date(`${date}T${endTime}:00`);
+        const entryDate = new Date(`${date}T00:00:00`);
+
+        if (endDateTime <= startDateTime) {
+            return { success: false, message: "End time must be after start time" };
+        }
+
+        await prisma.overtimeEntry.create({
+            data: {
+                user: { connect: { username: targetUsername } },
+                date: entryDate,
+                startTime: startDateTime,
+                endTime: endDateTime,
+                description: description || '',
+            }
+        });
+
+        revalidatePath('/');
+        return { success: true, message: 'Entry created successfully' };
+    } catch (e: any) {
+        console.error("Server Action Error:", e);
+        return { success: false, message: e.message || 'Internal Server Error' };
+    }
 }
 
 export async function deleteEntry(entryId: string) {
