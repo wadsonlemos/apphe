@@ -1,13 +1,26 @@
 import Navbar from '@/components/navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '@/auth';
+import { prisma } from '@/app/lib/db';
 
 export default async function Dashboard() {
   const session = await auth();
 
-  // Mock data for display when DB is down
-  const totalHours = 0;
-  const bankBalance = 0;
+  // Fetch entries for the logged-in user
+  const entries = await prisma.overtimeEntry.findMany({
+    where: {
+      user: { username: session?.user?.name! }
+    }
+  });
+
+  // Calculate total hours
+  let totalMilliseconds = 0;
+  entries.forEach(entry => {
+    totalMilliseconds += (entry.endTime.getTime() - entry.startTime.getTime());
+  });
+
+  const totalHours = (totalMilliseconds / (1000 * 60 * 60)).toFixed(2);
+  const bankBalance = totalHours; // For now, balance = total hours
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -23,7 +36,7 @@ export default async function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{totalHours}h</div>
               <p className="text-xs text-muted-foreground">
-                Recorded this month
+                Recorded total
               </p>
             </CardContent>
           </Card>
